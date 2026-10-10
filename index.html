@@ -138,7 +138,9 @@ h1 span { color: var(--gold); }
 .hud .clock { font-family: var(--display); font-size: 1.8rem; line-height: 1; }
 .hud .clock.low { color: var(--no); }
 #stage.flash-yes .clock.low, #stage.flash-no .clock.low { color: var(--cream); }
-.hud .score { justify-self: end; font-size: 1rem; }
+.hud .score { justify-self: end; font-size: 1rem; display: flex; align-items: center; gap: 8px; }
+.ready { width: 11px; height: 11px; border-radius: 50%; background: var(--muted); opacity: .5; }
+.ready.on { background: var(--yes); opacity: 1; box-shadow: 0 0 0 3px rgba(57,196,106,.25); }
 .quit {
   pointer-events: auto; flex: none;
   background: rgba(0,0,0,.28); border: 0; border-radius: 999px;
@@ -222,7 +224,7 @@ h1 span { color: var(--gold); }
     <ol>
       <li>Hold the phone <strong>sideways on your forehead</strong>, screen facing your friends.</li>
       <li>They explain without saying the word.</li>
-      <li><strong>Tilt down</strong> (or tap right) when you get it. <strong>Tilt up</strong> (or tap left) to pass. Bring the phone back level before the next card.</li>
+      <li><strong>Tilt down</strong> (or tap right) when you get it. <strong>Tilt up</strong> (or tap left) to pass. Come back level between cards; the corner dot turns green when tilt is ready.</li>
     </ol>
   </div>
 
@@ -237,7 +239,7 @@ h1 span { color: var(--gold); }
         <span class="cat-name" id="hudCat"></span>
       </div>
       <span class="clock" id="clock">60</span>
-      <span class="score" id="hudScore">0 ✓</span>
+      <span class="score"><i class="ready" id="readyDot" hidden></i><span id="hudScore">0 ✓</span></span>
     </div>
     <div class="word-wrap" id="wordWrap"><div id="center"></div></div>
     <div class="zones" id="zones" hidden>
@@ -265,39 +267,44 @@ h1 span { color: var(--gold); }
 const DECKS = {
   actors: {
     name: "Malayalam Actors",
-    blurb: "Lalettan to Naslen",
-    words: ["Mohanlal","Mammootty","Fahadh Faasil","Dulquer Salmaan","Prithviraj","Nivin Pauly","Tovino Thomas","Jayaram","Dileep","Suresh Gopi","Kunchacko Boban","Jayasurya","Manju Warrier","Shobana","Nayanthara","Parvathy Thiruvothu","Nazriya Nazim","Asif Ali","Soubin Shahir","Basil Joseph","Indrans","Jagathy Sreekumar","Innocent","Mukesh","Sreenivasan","Nedumudi Venu","Kalabhavan Mani","Salim Kumar","Suraj Venjaramoodu","Biju Menon","Joju George","Vineeth Sreenivasan","Dhyan Sreenivasan","Aju Varghese","Unni Mukundan","Kalyani Priyadarshan","Anna Ben","Aishwarya Lekshmi","Kavya Madhavan","Urvashi","KPAC Lalitha","Mamukkoya","Thilakan","Shine Tom Chacko","Naslen","Mamitha Baiju","Sharaf U Dheen","Arjun Ashokan","Shane Nigam","Roshan Mathew","Darshana Rajendran","Bhavana","Meera Jasmine","Samyuktha","Rima Kallingal","Sai Pallavi","Jagadish","Siddique","Lal","Saiju Kurup"]
+    blurb: "Prem Nazir to Naslen",
+    words: ["Mohanlal","Mammootty","Fahadh Faasil","Dulquer Salmaan","Prithviraj","Nivin Pauly","Tovino Thomas","Jayaram","Dileep","Suresh Gopi","Kunchacko Boban","Jayasurya","Manju Warrier","Shobana","Nayanthara","Parvathy Thiruvothu","Nazriya Nazim","Asif Ali","Soubin Shahir","Basil Joseph","Indrans","Jagathy Sreekumar","Innocent","Mukesh","Sreenivasan","Nedumudi Venu","Kalabhavan Mani","Salim Kumar","Suraj Venjaramoodu","Biju Menon","Joju George","Vineeth Sreenivasan","Dhyan Sreenivasan","Aju Varghese","Unni Mukundan","Kalyani Priyadarshan","Anna Ben","Aishwarya Lekshmi","Kavya Madhavan","Urvashi","KPAC Lalitha","Mamukkoya","Thilakan","Shine Tom Chacko","Naslen","Mamitha Baiju","Sharaf U Dheen","Arjun Ashokan","Shane Nigam","Roshan Mathew","Darshana Rajendran","Bhavana","Meera Jasmine","Samyuktha","Rima Kallingal","Sai Pallavi","Jagadish","Siddique","Lal","Saiju Kurup","Pranav Mohanlal","Kalidas Jayaram","Antony Varghese Pepe","Neeraj Madhav","Balu Varghese","Lukman Avaran","Mathew Thomas","Anaswara Rajan","Grace Antony","Rajisha Vijayan","Nimisha Sajayan","Mamta Mohandas","Keerthy Suresh","Honey Rose","Namitha Pramod","Lena","Remya Nambeesan","Amala Paul","Navya Nair","Divya Unni","Gopika","Sreenath Bhasi","Chemban Vinod Jose","Vinayakan","Dileesh Pothan","Jaffar Idukki","Kottayam Nazeer","Harisree Ashokan","Cochin Haneefa","Rajan P. Dev","Oduvil Unnikrishnan","Sukumaran","Prem Nazir","Sathyan","Madhu","Jayan","Sheela","Revathi","Shankar","Rahman","Murali","Balachandra Menon","Vijayaraghavan","Saikumar","Baburaj","Tini Tom","Ramesh Pisharody","Dharmajan Bolgatty","Guinness Pakru","Kalabhavan Shajohn","Indrajith Sukumaran","Mallika Sukumaran","Poornima Indrajith","Narain","Sunny Wayne","Vishnu Unnikrishnan","Anoop Menon","Murali Gopy","Renji Panicker","Gokul Suresh","Nikhila Vimal","Surabhi Lakshmi","Manju Pillai","Bindu Panicker","Kalpana","Sukumari","Philomina","Adoor Bhasi","Siju Wilson","Abu Salim","Spadikam George","Bheeman Raghu","Ahaana Krishna","Sudheesh","Joy Mathew","Alencier Ley Lopez","Chandunath","Prayaga Martin"]
   },
   movies: {
     name: "Famous Movies",
     blurb: "Mollywood, India & Hollywood",
-    words: ["Manichitrathazhu","Drishyam","Premam","Kireedam","Spadikam","Kilukkam","Ramji Rao Speaking","In Harihar Nagar","Nadodikkattu","Lucifer","Kumbalangi Nights","Bangalore Days","Minnal Murali","Manjummel Boys","Aavesham","Premalu","Thallumaala","Bheeshma Parvam","Ustad Hotel","Charlie","Maheshinte Prathikaram","Angamaly Diaries","Ayyappanum Koshiyum","2018","Pulimurugan","Rajamanikyam","Classmates","Chotta Mumbai","CID Moosa","Godfather","Chithram","Vandanam","Thanmathra","Romancham","Jaya Jaya Jaya Jaya Hey","Sholay","3 Idiots","Baahubali","RRR","KGF","Dangal","Dilwale Dulhania Le Jayenge","Lagaan","Jailer","Vikram","Titanic","Avatar","Jurassic Park","The Lion King","Harry Potter","Avengers: Endgame","The Dark Knight","Frozen","Home Alone","Jaws","Inception","Spider-Man","Finding Nemo","Toy Story","Interstellar","Star Wars","Mr. Bean"]
+    words: ["Manichitrathazhu","Drishyam","Premam","Kireedam","Spadikam","Kilukkam","Ramji Rao Speaking","In Harihar Nagar","Nadodikkattu","Lucifer","Kumbalangi Nights","Bangalore Days","Minnal Murali","Manjummel Boys","Aavesham","Premalu","Thallumaala","Bheeshma Parvam","Ustad Hotel","Charlie","Maheshinte Prathikaram","Angamaly Diaries","Ayyappanum Koshiyum","2018","Pulimurugan","Rajamanikyam","Classmates","Chotta Mumbai","CID Moosa","Godfather","Chithram","Vandanam","Thanmathra","Romancham","Jaya Jaya Jaya Jaya Hey","Aadujeevitham","Bramayugam","Kannur Squad","RDX","Hridayam","Joji","The Great Indian Kitchen","Trance","Virus","Uyare","Sudani from Nigeria","Ee.Ma.Yau","Take Off","Thondimuthalum Driksakshiyum","Kammatipaadam","Action Hero Biju","Ennu Ninte Moideen","Oru Vadakkan Selfie","Ohm Shanthi Oshaana","Drishyam 2","Traffic","Salt N' Pepper","Big B","Mumbai Police","Twenty:20","Narasimham","Devasuram","Aaraam Thampuran","Thenmavin Kombathu","Kakkakuyil","Meesa Madhavan","Kalyanaraman","Punjabi House","Boeing Boeing","Sandesham","Varavelpu","Mithunam","Yoddha","Bharatham","Vietnam Colony","Kabooliwala","Aniyathipravu","Niram","Nandanam","Oru CBI Diary Kurippu","Thoovanathumbikal","Amaram","Oru Vadakkan Veeragatha","Kaalapani","Guru","Udayananu Tharam","Kunjiramayanam","Adi Kapyare Kootamani","Two Countries","Thattathin Marayathu","Amen","Sholay","3 Idiots","Baahubali","RRR","KGF","Dangal","Dilwale Dulhania Le Jayenge","Lagaan","Jailer","Vikram","Pushpa","Kantara","Jawan","Pathaan","Animal","Mughal-e-Azam","Kuch Kuch Hota Hai","Kabhi Khushi Kabhie Gham","Munna Bhai MBBS","PK","Bajrangi Bhaijaan","Zindagi Na Milegi Dobara","Chennai Express","Om Shanti Om","Dhoom","Krrish","Enthiran","Ghajini","96","Leo","Kaithi","Padayappa","Baasha","Anniyan","Titanic","Avatar","Jurassic Park","The Lion King","Harry Potter","Avengers: Endgame","The Dark Knight","Frozen","Home Alone","Jaws","Inception","Spider-Man","Finding Nemo","Toy Story","Interstellar","Star Wars","Joker","Barbie","Oppenheimer","Forrest Gump","The Matrix","Gladiator","Pirates of the Caribbean","Shrek","Minions","Kung Fu Panda","Ice Age","Cars","Up","Coco","Aladdin","Fast & Furious","Mission: Impossible","James Bond","Rocky","Terminator","Top Gun","Transformers","Iron Man","Black Panther","King Kong","Godzilla","The Conjuring","Back to the Future","E.T.","Despicable Me"]
   },
   music: {
     name: "Music Artists",
     blurb: "Dasettan to Dabzee to Taylor Swift",
-    words: ["K. J. Yesudas","K. S. Chithra","M. G. Sreekumar","Sujatha Mohan","P. Jayachandran","Vijay Yesudas","Sithara Krishnakumar","Shreya Ghoshal","Haricharan","Job Kurian","Sushin Shyam","Gopi Sundar","Deepak Dev","Vidyasagar","Jakes Bejoy","Shaan Rahman","Bijibal","Dabzee","Vedan","Hanumankind","Thaikkudam Bridge","Avial Band","Ilaiyaraaja","A. R. Rahman","Anirudh","Sid Sriram","S. P. Balasubrahmanyam","Arijit Singh","Lata Mangeshkar","Kishore Kumar","Sonu Nigam","KK","Shankar Mahadevan","Diljit Dosanjh","AP Dhillon","Badshah","Yo Yo Honey Singh","Taylor Swift","Michael Jackson","Ed Sheeran","Justin Bieber","BTS","Eminem","The Weeknd","Beyoncé","Drake","Adele","Bruno Mars","Coldplay","Billie Eilish","Shakira","Rihanna","Bob Marley","Elvis Presley","The Beatles","Lady Gaga"]
+    words: ["K. J. Yesudas","K. S. Chithra","M. G. Sreekumar","Sujatha Mohan","P. Jayachandran","Vijay Yesudas","Sithara Krishnakumar","Shreya Ghoshal","Haricharan","Job Kurian","Sushin Shyam","Gopi Sundar","Deepak Dev","Vidyasagar","Jakes Bejoy","Shaan Rahman","Bijibal","Dabzee","Vedan","Hanumankind","Thaikkudam Bridge","Avial Band","S. Janaki","P. Susheela","Vani Jairam","Unni Menon","G. Venugopal","Biju Narayanan","Madhu Balakrishnan","Jyotsna","Rimi Tomy","Manjari","Najim Arshad","Shweta Mohan","Hesham Abdul Wahab","Justin Varghese","Rex Vijayan","Prashant Pillai","Ouseppachan","Johnson Master","Raveendran Master","M. G. Radhakrishnan","G. Devarajan","Salil Chowdhury","M. S. Baburaj","Kailas Menon","Jassie Gift","Alphons Joseph","Baby Jean","Fejo","ThirumaLi","Masala Coffee","Agam","Ilaiyaraaja","A. R. Rahman","Anirudh","Sid Sriram","S. P. Balasubrahmanyam","Yuvan Shankar Raja","Harris Jayaraj","Devi Sri Prasad","Thaman S","G. V. Prakash","Hiphop Tamizha","Santhosh Narayanan","Chinmayi","Karthik","Arijit Singh","Lata Mangeshkar","Kishore Kumar","Mohammed Rafi","Asha Bhosle","Udit Narayan","Kumar Sanu","Alka Yagnik","Sunidhi Chauhan","Neha Kakkar","Sonu Nigam","KK","Shaan","Shankar Mahadevan","Sukhwinder Singh","Atif Aslam","Rahat Fateh Ali Khan","Nusrat Fateh Ali Khan","Jubin Nautiyal","Armaan Malik","Pritam","Amit Trivedi","Diljit Dosanjh","AP Dhillon","Badshah","Yo Yo Honey Singh","Guru Randhawa","Sidhu Moose Wala","Karan Aujla","Divine","Raftaar","Mika Singh","Taylor Swift","Michael Jackson","Ed Sheeran","Justin Bieber","BTS","BLACKPINK","Eminem","The Weeknd","Beyoncé","Drake","Adele","Bruno Mars","Coldplay","Billie Eilish","Shakira","Rihanna","Bob Marley","Elvis Presley","The Beatles","Lady Gaga","Celine Dion","Whitney Houston","Madonna","Britney Spears","Katy Perry","Selena Gomez","Ariana Grande","Dua Lipa","Olivia Rodrigo","Post Malone","Snoop Dogg","Linkin Park","Metallica","Queen","ABBA","Backstreet Boys","One Direction","Maroon 5","Imagine Dragons","Charlie Puth","Shawn Mendes","Luis Fonsi","Alan Walker","Avicii","Marshmello","David Guetta","Kanye West","Pitbull","Akon","Enrique Iglesias","Jennifer Lopez","Stevie Wonder","Frank Sinatra","Mozart","Beethoven"]
   },
   places: {
     name: "Famous Places",
-    blurb: "Munnar to the Eiffel Tower",
-    words: ["Munnar","Alappuzha Houseboat","Kumarakom","Kovalam","Varkala Cliff","Wayanad","Thekkady","Fort Kochi","Chinese Fishing Nets","Athirappilly Falls","Guruvayur Temple","Sabarimala","Padmanabhaswamy Temple","Bekal Fort","Vagamon","Kozhikode Beach","Marine Drive","Lulu Mall","Jew Town","Kochi Metro","Lakshadweep","Kanyakumari","Ooty","Kodaikanal","Goa","Taj Mahal","Gateway of India","Mysore Palace","Red Fort","Ladakh","Charminar","Golden Temple","Dubai","Burj Khalifa","Eiffel Tower","Statue of Liberty","Great Wall of China","Pyramids of Giza","Big Ben","Niagara Falls","Mount Everest","Sydney Opera House","Singapore","Maldives","Times Square","Disneyland","Colosseum","Leaning Tower of Pisa","Hollywood Sign","Mecca","Vatican","Christ the Redeemer","Bali","Switzerland"]
+    blurb: "Munnar to Machu Picchu",
+    words: ["Munnar","Alappuzha Houseboat","Kumarakom","Kovalam","Varkala Cliff","Wayanad","Thekkady","Fort Kochi","Chinese Fishing Nets","Athirappilly Falls","Guruvayur Temple","Sabarimala","Padmanabhaswamy Temple","Bekal Fort","Vagamon","Kozhikode Beach","Marine Drive","Lulu Mall","Jew Town","Kochi Metro","Lakshadweep","Ponmudi","Jatayu Earth's Center","Poovar","Kappad Beach","Muzhappilangad Beach","Cherai Beach","Edakkal Caves","Banasura Sagar Dam","Idukki Dam","Mattupetty Dam","Eravikulam National Park","Silent Valley","Nelliyampathy","Kuttanad","Ashtamudi Lake","Vembanad Lake","Napier Museum","Vadakkunnathan Temple","Kerala Kalamandalam","Attukal Temple","Chottanikkara Temple","Malayattoor","Beemapally","Cheraman Juma Masjid","Bolgatty Palace","Hill Palace","Mattancherry Palace","Wonderla","Kochi Airport","Vizhinjam Port","SM Street","Thiruvananthapuram Zoo","Thenmala","Palakkad Fort","Malampuzha Dam","Gavi","Ranipuram","Kanyakumari","Ooty","Kodaikanal","Coorg","Goa","Taj Mahal","Gateway of India","Mysore Palace","Red Fort","India Gate","Qutub Minar","Ladakh","Charminar","Golden Temple","Hampi","Jaipur","Udaipur","Varanasi","Rishikesh","Manali","Shimla","Kashmir","Darjeeling","Andaman","Meenakshi Temple","Marina Beach","Tirupati","Ramoji Film City","Mahabalipuram","Rameswaram","Statue of Unity","Ajanta Ellora Caves","Dubai","Burj Khalifa","Abu Dhabi","Mecca","Eiffel Tower","Statue of Liberty","Great Wall of China","Pyramids of Giza","Big Ben","London Eye","Buckingham Palace","Stonehenge","Niagara Falls","Mount Everest","Sydney Opera House","Singapore","Marina Bay Sands","Maldives","Sri Lanka","Bangkok","Bali","Petronas Towers","Times Square","Golden Gate Bridge","Las Vegas","Grand Canyon","Disneyland","Hollywood Sign","Colosseum","Leaning Tower of Pisa","Venice","Vatican","Santorini","Switzerland","Christ the Redeemer","Machu Picchu","Petra","Angkor Wat","Tokyo","Mount Fuji","Amazon Rainforest","Sahara Desert","Antarctica","North Pole","Bermuda Triangle","The Moon"]
   },
   food: {
     name: "Kerala Food",
     blurb: "Sadhya, thattukada & Malabar",
-    words: ["Puttu and Kadala","Appam and Stew","Idiyappam","Porotta","Kizhi Porotta","Beef Ularthiyathu","Beef Fry","Sadhya","Avial","Sambar","Rasam","Olan","Kalan","Pulissery","Erissery","Thoran","Inji Puli","Mango Pickle","Pappadam","Ada Pradhaman","Palada Payasam","Pazhampori","Unniyappam","Banana Chips","Sharkara Varatti","Karimeen Pollichathu","Kappa and Meen Curry","Kappa Biryani","Chemmeen Roast","Tharavu Roast","Nadan Kozhi Curry","Thalassery Biryani","Malabar Biryani","Pathiri","Kallappam","Vattayappam","Kozhukatta","Ela Ada","Neyyappam","Achappam","Kuzhalappam","Parippu Vada","Uzhunnu Vada","Mulaku Bajji","Pazham Nirachathu","Unnakkaya","Kozhikode Halwa","Sulaimani","Kattan Chaya","Kulukki Sarbath","Mutta Curry","Pidi and Kozhi","Kanji and Payar","Chakka Varatti","Chakka Puzhukku","Pothichoru","Avalose Podi","Ari Unda","Mutta Puffs","Bonda"]
+    words: ["Puttu and Kadala","Appam and Stew","Idiyappam","Porotta","Kizhi Porotta","Kothu Porotta","Beef Ularthiyathu","Beef Fry","Sadhya","Avial","Sambar","Rasam","Olan","Kalan","Pulissery","Erissery","Thoran","Theeyal","Moru Curry","Inji Puli","Mango Pickle","Pappadam","Chammanthi","Ada Pradhaman","Palada Payasam","Pal Payasam","Semiya Payasam","Chakka Pradhaman","Pazham Pradhaman","Elaneer Payasam","Pazhampori","Unniyappam","Banana Chips","Sharkara Varatti","Karimeen Pollichathu","Kappa and Meen Curry","Kappa Biryani","Meen Mulakittathu","Fish Moilee","Mathi Fry","Netholi Fry","Ayala Curry","Chemmeen Roast","Chemmeen Curry","Njandu Curry","Koonthal Fry","Kallummakaya Fry","Tharavu Roast","Duck Mappas","Nadan Kozhi Curry","Chicken Stew","Pork Ularthiyathu","Beef Cutlet","Thalassery Biryani","Malabar Biryani","Kuzhi Mandhi","Al Faham","Pathiri","Chatti Pathiri","Erachi Pathiri","Unnakkaya","Kaipola","Muttamala","Arikadukka","Kozhi Nirachathu","Kallappam","Vattayappam","Kozhukatta","Ela Ada","Neyyappam","Kumbilappam","Kinnathappam","Achappam","Kuzhalappam","Murukku","Pakkavada","Mixture","Kappalandi Mittai","Ellunda","Ari Unda","Avalose Podi","Vettu Cake","Dilkhush","Parippu Vada","Uzhunnu Vada","Mulaku Bajji","Pazham Nirachathu","Kozhikode Halwa","Sulaimani","Kattan Chaya","Chukku Kaapi","Sambharam","Nannari Sarbath","Kulukki Sarbath","Kallu","Mutta Curry","Bullseye","Kalakki","Thattu Dosa","Pidi and Kozhi","Kanji and Payar","Chakka Varatti","Chakka Puzhukku","Pothichoru","Kerala Meals","Uppumavu","Vazhakka Mezhukkupuratti","Koorka Mezhukkupuratti","Mutta Puffs","Bonda"]
   },
   mix: { name: "Everything Mixed", blurb: "Every deck shuffled together", words: [] }
 };
-DECKS.mix.words = Object.entries(DECKS).filter(([k]) => k !== "mix").flatMap(([, d]) => d.words);
+for (const d of Object.values(DECKS)) d.words = [...new Set(d.words)];
+DECKS.mix.words = [...new Set(Object.entries(DECKS).filter(([k]) => k !== "mix").flatMap(([, d]) => d.words))];
 
 const $ = id => document.getElementById(id);
 let catKey = "actors";
 let roundSecs = 60;
-const SENS = { Small: 35, Medium: 50, Big: 65 }; // degrees of tilt needed
+const SENS = { Small: 40, Medium: 55, Big: 70 }; // degrees of tilt needed
 let sensKey = "Medium";
-const used = {}; // words already seen this session, per deck
+const used = {}; // words already shown, per deck, remembered across visits
+const USED_KEY = "nettiyil-used-v1";
+try { const o = JSON.parse(localStorage.getItem(USED_KEY) || "{}"); for (const k in o) used[k] = new Set(o[k]); } catch (e) {}
+function saveUsed() { try { const o = {}; for (const k in used) o[k] = [...used[k]]; localStorage.setItem(USED_KEY, JSON.stringify(o)); } catch (e) {} }
+const unseen = k => DECKS[k].words.filter(w => !(used[k] && used[k].has(w))).length;
 
 function chips(boxId, options, isOn, pick) {
   const box = $(boxId);
@@ -322,7 +329,8 @@ function renderSetup() {
     b.innerHTML = `<b></b><small></small><span class="n"></span>`;
     b.querySelector("b").textContent = d.name;
     b.querySelector("small").textContent = d.blurb;
-    b.querySelector(".n").textContent = d.words.length + " CARDS";
+    const fresh = unseen(k);
+    b.querySelector(".n").textContent = d.words.length + " CARDS" + (fresh < d.words.length ? ` · ${fresh} NEW` : "");
     b.onclick = () => { catKey = k; renderSetup(); };
     $("cats").appendChild(b);
   }
@@ -396,7 +404,7 @@ function buildDeck() {
   const all = DECKS[catKey].words;
   used[catKey] = used[catKey] || new Set();
   let fresh = all.filter(w => !used[catKey].has(w));
-  if (fresh.length < 15) { used[catKey].clear(); fresh = all.slice(); }
+  if (!fresh.length) { used[catKey].clear(); fresh = all.slice(); }
   for (let i = fresh.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [fresh[i], fresh[j]] = [fresh[j], fresh[i]];
@@ -437,7 +445,7 @@ async function startRound() {
   }
   if (phase !== "countdown") return;
   sfx.go();
-  calibrate();
+  resetTilt();
   phase = "play";
   $("zones").hidden = false;
   timeLeft = roundSecs;
@@ -454,6 +462,7 @@ function nextWord() {
   if (!deck.length) deck = buildDeck();
   current = deck.pop();
   used[catKey].add(current);
+  saveUsed();
   const safe = current.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
   showCenter(`<p id="word">${safe}</p>`);
   tilt.readyAt = performance.now() + 600;
@@ -462,7 +471,7 @@ function nextWord() {
 function answer(ok) {
   if (phase !== "play" || lock) return;
   lock = true;
-  tilt.armed = false; // phone must come back level before the next tilt counts
+  resetTilt(); // phone must come back level before the next tilt counts
   log.push({ word: current, ok });
   ok ? sfx.yes() : sfx.no();
   const st = $("stage");
@@ -505,37 +514,50 @@ function endRound() {
 }
 
 /* ---------- Tilt ----------
-   Smooth the gravity reading, turn it into an angle (0° = screen facing your friends,
-   -90° = facing the floor, +90° = facing the ceiling), measure it against the angle your
-   head was at when the round started, and only count a tilt that is held briefly.
-   After each answer the phone has to come back near level before another tilt counts. */
-const HOLD_MS = 180, LEVEL_DEG = 22, LEVEL_MS = 250;
-const tilt = { g: null, angle: 0, base: 0, armed: false, holdDir: 0, holdSince: 0, levelSince: 0, readyAt: 0 };
+   Reads the phone's fused orientation (gyroscope + accelerometer), which ignores head
+   bobbing and jolts. Falls back to a heavily smoothed accelerometer if that's missing.
+   Angle: 0° = screen facing your friends, -90° = facing the floor, +90° = facing the ceiling.
+   A tilt must pass the threshold and be held briefly. After every card the phone must be
+   held level for a moment before the next tilt counts (the dot in the corner turns green). */
+const HOLD_MS = 250, LEVEL_DEG = 30, LEVEL_MS = 300;
+const D2R = Math.PI / 180, R2D = 180 / Math.PI;
+const clamp1 = v => Math.max(-1, Math.min(1, v));
+const tilt = { angle: null, src: null, armed: false, holdDir: 0, holdSince: 0, levelSince: 0, readyAt: 0 };
 let motionOn = false, sensorSeen = false, flipTilt = false;
 
 function tiltStatus(msg, cls = "") {
   $("tiltStatus").textContent = msg;
   $("tiltStatus").className = "tilt-status " + cls;
 }
-function calibrate() {
-  // Heads lean a bit; treat the current angle as level, within reason.
-  tilt.base = Math.max(-30, Math.min(30, tilt.angle));
-  tilt.armed = true; tilt.holdDir = 0; tilt.levelSince = 0;
+function resetTilt() {
+  tilt.armed = false; tilt.holdDir = 0; tilt.levelSince = 0;
+  setDot();
+}
+function setDot() {
+  const dot = $("readyDot");
+  dot.hidden = !sensorSeen;
+  dot.classList.toggle("on", tilt.armed);
+}
+function onOrient(e) {
+  if (e.beta == null || e.gamma == null) return;
+  // How much the screen faces up: cos(beta)·cos(gamma). Stays smooth through vertical.
+  const up = Math.cos(e.beta * D2R) * Math.cos(e.gamma * D2R);
+  feedAngle(Math.asin(clamp1(up)) * R2D, "orient");
 }
 function onMotion(e) {
   const a = e.accelerationIncludingGravity;
   if (!a || a.x == null || a.z == null) return;
-  // Low-pass filter: ignores head bobbing and hand shake, keeps the slow tilt.
-  const k = 0.18;
-  tilt.g = tilt.g
-    ? { x: tilt.g.x + k * (a.x - tilt.g.x), y: tilt.g.y + k * (a.y - tilt.g.y), z: tilt.g.z + k * (a.z - tilt.g.z) }
-    : { x: a.x, y: a.y, z: a.z };
-  const { x, y, z } = tilt.g;
-  const mag = Math.hypot(x, y, z);
-  if (mag < 5) return; // free fall / junk reading
-  let angle = Math.asin(Math.max(-1, Math.min(1, z / mag))) * 180 / Math.PI;
-  if (flipTilt) angle = -angle;
-  tilt.angle = angle;
+  const mag = Math.hypot(a.x, a.y, a.z);
+  if (mag < 6 || mag > 14) return; // the phone is being jolted; skip
+  feedAngle(Math.asin(clamp1(a.z / mag)) * R2D, "motion");
+}
+function feedAngle(raw, src) {
+  if (src === "motion" && tilt.src === "orient") return; // prefer the fused sensor
+  if (src === "orient" && tilt.src !== "orient") { tilt.src = "orient"; tilt.angle = null; }
+  if (!tilt.src) tilt.src = src;
+  const a = flipTilt ? -raw : raw;
+  const k = src === "orient" ? 0.4 : 0.08;
+  tilt.angle = tilt.angle == null ? a : tilt.angle + k * (a - tilt.angle);
 
   if (!sensorSeen) {
     sensorSeen = true;
@@ -543,16 +565,15 @@ function onMotion(e) {
     $("tiltBtn").textContent = "Tilt on";
   }
   if (phase !== "play") {
-    if ($("setup").hidden === false) showLiveTilt(angle);
+    if (!$("setup").hidden) showLiveTilt(tilt.angle);
     return;
   }
 
-  const now = performance.now();
-  const d = angle - tilt.base;
+  const now = performance.now(), d = tilt.angle;
   if (!tilt.armed) {
     if (Math.abs(d) < LEVEL_DEG) {
       if (!tilt.levelSince) tilt.levelSince = now;
-      if (now - tilt.levelSince > LEVEL_MS) { tilt.armed = true; tilt.holdDir = 0; }
+      if (now - tilt.levelSince >= LEVEL_MS) { tilt.armed = true; tilt.holdDir = 0; setDot(); }
     } else tilt.levelSince = 0;
     return;
   }
@@ -561,10 +582,7 @@ function onMotion(e) {
   const dir = d <= -need ? 1 : d >= need ? -1 : 0; // 1 = down (correct), -1 = up (pass)
   if (dir === 0) { tilt.holdDir = 0; return; }
   if (dir !== tilt.holdDir) { tilt.holdDir = dir; tilt.holdSince = now; return; }
-  if (now - tilt.holdSince >= HOLD_MS) {
-    tilt.holdDir = 0; tilt.levelSince = 0;
-    answer(dir === 1);
-  }
+  if (now - tilt.holdSince >= HOLD_MS) answer(dir === 1);
 }
 let liveRaf = 0;
 function showLiveTilt(angle) {
@@ -572,8 +590,10 @@ function showLiveTilt(angle) {
   liveRaf = requestAnimationFrame(() => {
     liveRaf = 0;
     const need = SENS[sensKey];
-    const word = angle <= -need ? "→ counts as CORRECT" : angle >= need ? "→ counts as PASS" : "";
-    tiltStatus(`Tilt is working: ${Math.abs(Math.round(angle))}° ${angle < 0 ? "down" : "up"} ${word}. Needs ${need}° to count. If down and up are backwards, tap “Swap up / down”.`, "ok");
+    const state = angle <= -need ? "counts as CORRECT" : angle >= need ? "counts as PASS"
+      : Math.abs(angle) < LEVEL_DEG ? "level, ready" : "not far enough yet";
+    const sensor = tilt.src === "orient" ? "gyroscope" : "accelerometer";
+    tiltStatus(`Tilt is working (${sensor}): ${Math.abs(Math.round(angle))}° ${angle < 0 ? "down" : "up"}, ${state}. Hold the phone sideways like on your forehead to test. If down and up are backwards, tap “Swap up / down”.`, "ok");
   });
 }
 function sensorCheck() {
@@ -588,17 +608,20 @@ function sensorCheck() {
 function enableMotion() {
   if (motionOn) return;
   motionOn = true;
+  const listen = () => {
+    addEventListener("deviceorientation", onOrient);
+    addEventListener("devicemotion", onMotion);
+    sensorCheck();
+  };
   try {
-    if (typeof DeviceMotionEvent !== "undefined" && typeof DeviceMotionEvent.requestPermission === "function") {
-      // iPhone: must be asked inside a tap
-      DeviceMotionEvent.requestPermission().then(s => {
-        if (s === "granted") { addEventListener("devicemotion", onMotion); sensorCheck(); }
-        else { motionOn = false; tiltStatus("Motion access was denied. Close and reopen the page in Safari to be asked again. Tapping still works.", "bad"); }
-      }).catch(() => { motionOn = false; tiltStatus("This page isn't allowed to ask for motion access. Open the standalone link in Safari. Tapping still works.", "bad"); });
-    } else {
-      addEventListener("devicemotion", onMotion);
-      sensorCheck();
-    }
+    const O = window.DeviceOrientationEvent, M = window.DeviceMotionEvent;
+    const asks = [O, M].filter(E => E && typeof E.requestPermission === "function");
+    if (!asks.length) return listen();
+    // iPhone: ask inside the tap. Both calls start right away so the tap still counts.
+    Promise.allSettled(asks.map(E => E.requestPermission())).then(res => {
+      if (res.some(r => r.status === "fulfilled" && r.value === "granted")) listen();
+      else { motionOn = false; tiltStatus("Motion access wasn't allowed. Close and reopen the page in Safari to be asked again. Tapping still works.", "bad"); }
+    });
   } catch (e) {}
 }
 
