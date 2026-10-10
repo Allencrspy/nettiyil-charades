@@ -1,0 +1,522 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#08261c">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Nettiyil Charades</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Manrope:wght@500;700&display=swap">
+<style>
+/* Layout: one-screen game app. Setup → forehead card (landscape) → results. Banana-leaf green with a kasavu gold stripe. */
+:root {
+  --leaf: #0f3b2c;
+  --leaf-deep: #08261c;
+  --leaf-soft: #1a5640;
+  --gold: #e8b649;
+  --cream: #f7efd9;
+  --muted: #a9c2b4;
+  --yes: #39c46a;
+  --no: #e3532f;
+  --display: "Bricolage Grotesque", "Arial Black", system-ui, sans-serif;
+  --body: "Manrope", system-ui, -apple-system, sans-serif;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body {
+  background: var(--leaf-deep);
+  color: var(--cream);
+  font-family: var(--body);
+  font-size: 16px;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+
+/* ---------- Setup ---------- */
+#setup, #results {
+  min-height: 100%;
+  box-sizing: border-box;
+  padding: 20px 16px 28px;
+  max-width: 560px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+.brand { display: flex; flex-direction: column; gap: 4px; }
+.kasavu { height: 6px; border-top: 2px solid var(--gold); border-bottom: 2px solid var(--gold); width: 72px; margin-bottom: 10px; }
+h1 {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: clamp(2.6rem, 11vw, 3.6rem);
+  line-height: .95;
+  letter-spacing: -0.02em;
+  margin: 0;
+  text-wrap: balance;
+}
+h1 span { color: var(--gold); }
+.ml { font-size: 1rem; color: var(--muted); margin: 6px 0 0; }
+.label {
+  font-size: .72rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .12em; color: var(--muted); margin: 0 0 10px;
+}
+.cats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.cat {
+  text-align: left;
+  background: var(--leaf);
+  border: 2px solid var(--leaf-soft);
+  border-radius: 14px;
+  padding: 14px 14px 12px;
+  display: flex; flex-direction: column; gap: 6px;
+  min-height: 108px;
+  transition: border-color .15s, transform .1s;
+}
+.cat:active { transform: scale(.98); }
+.cat[aria-pressed="true"] { border-color: var(--gold); background: #154a37; }
+.cat b { font-family: var(--display); font-weight: 800; font-size: 1.25rem; line-height: 1.05; }
+.cat small { color: var(--muted); font-size: .8rem; line-height: 1.3; }
+.cat .n { margin-top: auto; font-size: .72rem; color: var(--gold); font-weight: 700; letter-spacing: .06em; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  background: transparent; border: 2px solid var(--leaf-soft);
+  border-radius: 999px; padding: 8px 16px; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.chip[aria-pressed="true"] { background: var(--gold); color: var(--leaf-deep); border-color: var(--gold); }
+.tilt-status { margin: 10px 0 0; font-size: .88rem; line-height: 1.45; color: var(--muted); }
+.tilt-status.ok { color: var(--yes); }
+.tilt-status.bad { color: #ffb8a3; }
+.how {
+  background: var(--leaf); border-radius: 14px; padding: 14px 16px;
+  font-size: .9rem; line-height: 1.5; color: var(--muted);
+}
+.how ol { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; }
+.how strong { color: var(--cream); }
+.start {
+  background: var(--gold); color: var(--leaf-deep);
+  border: 0; border-radius: 16px; padding: 18px;
+  font-family: var(--display); font-weight: 800; font-size: 1.4rem;
+  box-shadow: 0 4px 0 #9c7520;
+}
+.start:active { transform: translateY(3px); box-shadow: 0 1px 0 #9c7520; }
+.start:disabled { opacity: .4; }
+
+/* ---------- Play ---------- */
+#play { position: fixed; inset: 0; background: var(--leaf); z-index: 10; overflow: hidden; }
+#stage {
+  position: absolute; top: 0; left: 0;
+  display: flex; flex-direction: column;
+  transform-origin: top left;
+  background: var(--leaf);
+  transition: background-color .25s;
+}
+#stage.flash-yes { background: var(--yes); transition: none; }
+#stage.flash-no { background: var(--no); transition: none; }
+.hud {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 18px 0; font-weight: 700; font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+.hud .cat-name { font-size: .8rem; text-transform: uppercase; letter-spacing: .12em; color: var(--gold); }
+.hud .clock { font-family: var(--display); font-size: 1.8rem; }
+.hud .clock.low { color: var(--no); }
+#stage.flash-yes .clock.low, #stage.flash-no .clock.low { color: var(--cream); }
+.hud .score { font-size: 1rem; }
+.word-wrap { flex: 1; display: grid; place-items: center; padding: 0 24px; min-height: 0; }
+#word {
+  font-family: var(--display); font-weight: 800;
+  line-height: 1; text-align: center; letter-spacing: -0.02em;
+  text-wrap: balance; margin: 0;
+}
+.zones { position: absolute; inset: 0; display: grid; grid-template-columns: 1fr 1fr; }
+.zone { background: transparent; border: 0; display: flex; align-items: flex-end; padding: 0 18px 12px; }
+.zone span {
+  font-size: .78rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+  opacity: .55; border-top: 2px solid currentColor; padding-top: 6px;
+}
+.zone.pass { justify-content: flex-start; color: #ffb8a3; }
+.zone.yes { justify-content: flex-end; color: #a8f0c0; }
+.quit {
+  position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+  background: rgba(0,0,0,.25); border: 0; border-radius: 999px;
+  padding: 6px 14px; font-size: .75rem; font-weight: 700; z-index: 2;
+}
+.verdict {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  font-family: var(--display); font-weight: 800; font-size: 18vmin;
+  pointer-events: none;
+}
+.big-count { font-family: var(--display); font-weight: 800; font-size: 40vmin; color: var(--gold); }
+.hint { color: var(--muted); font-size: 1rem; margin-top: 4px; text-align: center; }
+
+/* ---------- Results ---------- */
+.final { display: flex; align-items: baseline; gap: 12px; }
+.final .num { font-family: var(--display); font-weight: 800; font-size: 5rem; line-height: 1; color: var(--gold); font-variant-numeric: tabular-nums; }
+.final .of { color: var(--muted); font-weight: 700; }
+.list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.list li {
+  display: flex; justify-content: space-between; gap: 12px;
+  padding: 10px 14px; border-radius: 10px; background: var(--leaf);
+  font-weight: 700;
+}
+.list li.pass { color: var(--muted); background: transparent; border: 1px dashed var(--leaf-soft); }
+.list li em { font-style: normal; font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; }
+.list li.yes em { color: var(--yes); }
+.list li.pass em { color: var(--no); }
+.secondary { background: transparent; border: 2px solid var(--leaf-soft); border-radius: 16px; padding: 14px; font-weight: 700; }
+.actions { display: grid; gap: 10px; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+</style>
+
+<section id="setup">
+  <div class="brand">
+    <div class="kasavu" aria-hidden="true"></div>
+    <h1>Nettiyil <span>Charades</span></h1>
+    <p class="ml">നെറ്റിയിൽ · phone on your forehead, friends do the talking</p>
+  </div>
+
+  <div>
+    <p class="label">Pick a deck</p>
+    <div class="cats" id="cats"></div>
+  </div>
+
+  <div>
+    <p class="label">Round length</p>
+    <div class="row" id="times"></div>
+  </div>
+
+  <div>
+    <p class="label">Tilt controls</p>
+    <div class="row">
+      <button class="chip" id="tiltBtn">Turn on tilt</button>
+      <button class="chip" id="flipBtn" aria-pressed="false">Swap up / down</button>
+    </div>
+    <p class="tilt-status" id="tiltStatus">Tap “Turn on tilt”, then tilt the phone to test it.</p>
+  </div>
+
+  <div class="how">
+    <ol>
+      <li>Hold the phone <strong>sideways on your forehead</strong>, screen facing your friends.</li>
+      <li>They explain without saying the word. No Malayalam-to-English cheating.</li>
+      <li><strong>Tap the right half</strong> when you get it, <strong>left half</strong> to pass. If your phone allows motion, tilt down for correct and up to pass.</li>
+    </ol>
+  </div>
+
+  <button class="start" id="startBtn">Start round</button>
+</section>
+
+<section id="play" hidden>
+  <div id="stage">
+    <div class="hud">
+      <span class="cat-name" id="hudCat"></span>
+      <span class="clock" id="clock">60</span>
+      <span class="score" id="hudScore">0 ✓</span>
+    </div>
+    <div class="word-wrap"><div id="center"></div></div>
+    <div class="zones" id="zones" hidden>
+      <button class="zone pass" id="passZone" aria-label="Pass"><span>Pass</span></button>
+      <button class="zone yes" id="yesZone" aria-label="Got it"><span>Got it</span></button>
+    </div>
+    <div class="verdict" id="verdict" hidden></div>
+    <button class="quit" id="quitBtn">End round</button>
+  </div>
+</section>
+
+<section id="results" hidden>
+  <div class="brand">
+    <div class="kasavu" aria-hidden="true"></div>
+    <p class="label" id="resCat" style="margin:0"></p>
+    <div class="final"><span class="num" id="resNum">0</span><span class="of" id="resOf"></span></div>
+  </div>
+  <ul class="list" id="resList"></ul>
+  <div class="actions">
+    <button class="start" id="againBtn">Play again</button>
+    <button class="secondary" id="menuBtn">Change deck</button>
+  </div>
+</section>
+
+<script>
+const DECKS = {
+  actors: {
+    name: "Malayalam Actors",
+    blurb: "Lalettan to Naslen",
+    words: ["Mohanlal","Mammootty","Fahadh Faasil","Dulquer Salmaan","Prithviraj","Nivin Pauly","Tovino Thomas","Jayaram","Dileep","Suresh Gopi","Kunchacko Boban","Jayasurya","Manju Warrier","Shobana","Nayanthara","Parvathy Thiruvothu","Nazriya Nazim","Asif Ali","Soubin Shahir","Basil Joseph","Indrans","Jagathy Sreekumar","Innocent","Mukesh","Sreenivasan","Nedumudi Venu","Kalabhavan Mani","Salim Kumar","Suraj Venjaramoodu","Biju Menon","Joju George","Vineeth Sreenivasan","Dhyan Sreenivasan","Aju Varghese","Unni Mukundan","Kalyani Priyadarshan","Anna Ben","Aishwarya Lekshmi","Kavya Madhavan","Urvashi","KPAC Lalitha","Mamukkoya","Thilakan","Shine Tom Chacko","Naslen","Mamitha Baiju","Sharaf U Dheen","Arjun Ashokan","Shane Nigam","Roshan Mathew","Darshana Rajendran","Bhavana","Meera Jasmine","Samyuktha","Rima Kallingal","Sai Pallavi","Jagadish","Siddique","Lal","Saiju Kurup"]
+  },
+  movies: {
+    name: "Famous Movies",
+    blurb: "Mollywood, India & Hollywood",
+    words: ["Manichitrathazhu","Drishyam","Premam","Kireedam","Spadikam","Kilukkam","Ramji Rao Speaking","In Harihar Nagar","Nadodikkattu","Lucifer","Kumbalangi Nights","Bangalore Days","Minnal Murali","Manjummel Boys","Aavesham","Premalu","Thallumaala","Bheeshma Parvam","Ustad Hotel","Charlie","Maheshinte Prathikaram","Angamaly Diaries","Ayyappanum Koshiyum","2018","Pulimurugan","Rajamanikyam","Classmates","Chotta Mumbai","CID Moosa","Godfather","Chithram","Vandanam","Thanmathra","Romancham","Jaya Jaya Jaya Jaya Hey","Sholay","3 Idiots","Baahubali","RRR","KGF","Dangal","Dilwale Dulhania Le Jayenge","Lagaan","Jailer","Vikram","Titanic","Avatar","Jurassic Park","The Lion King","Harry Potter","Avengers: Endgame","The Dark Knight","Frozen","Home Alone","Jaws","Inception","Spider-Man","Finding Nemo","Toy Story","Interstellar","Star Wars","Mr. Bean"]
+  },
+  food: {
+    name: "Food",
+    blurb: "Sadhya specials and beyond",
+    words: ["Puttu","Appam","Idiyappam","Porotta","Beef Fry","Sadhya","Avial","Sambar","Payasam","Pazhampori","Unniyappam","Banana Chips","Karimeen Pollichathu","Kappa","Fish Curry","Thalassery Biryani","Dosa","Idli","Uzhunnu Vada","Erissery","Thoran","Mango Pickle","Kozhukatta","Ela Ada","Neyyappam","Parippu Vada","Sulaimani","Kattan Chaya","Achappam","Kozhikode Halwa","Pizza","Burger","Shawarma","Momos","Noodles","Ice Cream","Chocolate","Pani Puri","Samosa","Butter Chicken","Sushi","French Fries","Popcorn","Birthday Cake","Pappadam","Kadala Curry","Chicken 65","Mutta Curry","Kulukki Sarbath","Boost"]
+  },
+  mix: { name: "Everything Mixed", blurb: "All three decks shuffled together", words: [] }
+};
+DECKS.mix.words = [...DECKS.actors.words, ...DECKS.movies.words, ...DECKS.food.words];
+
+const $ = id => document.getElementById(id);
+let catKey = "actors";
+let roundSecs = 60;
+const used = {}; // words already seen this session, per deck
+
+/* ---------- Setup UI ---------- */
+function renderSetup() {
+  $("cats").innerHTML = "";
+  for (const [k, d] of Object.entries(DECKS)) {
+    const b = document.createElement("button");
+    b.className = "cat";
+    b.setAttribute("aria-pressed", k === catKey);
+    b.innerHTML = `<b></b><small></small><span class="n"></span>`;
+    b.querySelector("b").textContent = d.name;
+    b.querySelector("small").textContent = d.blurb;
+    b.querySelector(".n").textContent = d.words.length + " CARDS";
+    b.onclick = () => { catKey = k; renderSetup(); };
+    $("cats").appendChild(b);
+  }
+  $("times").innerHTML = "";
+  for (const s of [60, 90, 120]) {
+    const b = document.createElement("button");
+    b.className = "chip";
+    b.setAttribute("aria-pressed", s === roundSecs);
+    b.textContent = s + " sec";
+    b.onclick = () => { roundSecs = s; renderSetup(); };
+    $("times").appendChild(b);
+  }
+}
+renderSetup();
+
+/* ---------- Sound + haptics ---------- */
+let actx = null;
+function beep(freq, dur = 0.12, type = "sine", vol = 0.25) {
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(vol, actx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + dur);
+    o.connect(g).connect(actx.destination);
+    o.start(); o.stop(actx.currentTime + dur);
+  } catch (e) {}
+}
+const buzz = ms => { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} };
+const sfx = {
+  yes() { beep(880, .1); setTimeout(() => beep(1320, .18), 90); buzz(60); },
+  no() { beep(180, .25, "sawtooth", .15); buzz([40, 40, 40]); },
+  tick() { beep(1000, .05, "square", .08); },
+  go() { beep(660, .25); },
+  end() { beep(440, .5, "triangle", .3); setTimeout(() => beep(330, .7, "triangle", .3), 250); buzz(400); }
+};
+
+/* ---------- Landscape stage ---------- */
+// The stage always lays out landscape. If the phone is held portrait (rotation lock on), rotate it 90°.
+function layoutStage() {
+  const st = $("stage"), w = innerWidth, h = innerHeight;
+  if (h > w) {
+    st.style.width = h + "px"; st.style.height = w + "px";
+    st.style.transform = `rotate(90deg) translateY(-100%)`;
+  } else {
+    st.style.width = w + "px"; st.style.height = h + "px";
+    st.style.transform = "none";
+  }
+  fitWord();
+}
+addEventListener("resize", () => { if (!$("play").hidden) layoutStage(); });
+
+function fitWord() {
+  const el = $("center").querySelector("#word");
+  if (!el) return;
+  const st = $("stage");
+  const maxW = st.offsetWidth - 48, maxH = st.offsetHeight - 110;
+  let size = Math.min(maxH * 0.6, 160);
+  el.style.fontSize = size + "px";
+  while ((el.scrollWidth > maxW || el.scrollHeight > maxH) && size > 20) {
+    size -= 4; el.style.fontSize = size + "px";
+  }
+}
+
+/* ---------- Game ---------- */
+let deck = [], log = [], current = null, phase = "idle";
+let timeLeft = 0, timerId = null, lock = false;
+
+function buildDeck() {
+  const all = DECKS[catKey].words;
+  used[catKey] = used[catKey] || new Set();
+  let fresh = all.filter(w => !used[catKey].has(w));
+  if (fresh.length < 15) { used[catKey].clear(); fresh = all.slice(); }
+  for (let i = fresh.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [fresh[i], fresh[j]] = [fresh[j], fresh[i]];
+  }
+  return fresh;
+}
+
+function showCenter(html) { $("center").innerHTML = html; fitWord(); }
+
+async function startRound() {
+  sfx.tick(); // unlock audio inside the tap
+  enableMotion();
+  try { await navigator.wakeLock?.request("screen"); } catch (e) {}
+  try { await document.documentElement.requestFullscreen?.(); } catch (e) {}
+
+  deck = buildDeck(); log = []; current = null;
+  $("setup").hidden = true; $("results").hidden = true; $("play").hidden = false;
+  $("zones").hidden = true;
+  $("hudCat").textContent = DECKS[catKey].name;
+  $("hudScore").textContent = "0 ✓";
+  $("clock").textContent = roundSecs; $("clock").classList.remove("low");
+  layoutStage();
+
+  phase = "countdown";
+  for (const n of [3, 2, 1]) {
+    if (phase !== "countdown") return;
+    showCenter(`<div class="big-count">${n}</div><div class="hint">Phone on your forehead</div>`);
+    sfx.tick();
+    await new Promise(r => setTimeout(r, 900));
+  }
+  if (phase !== "countdown") return;
+  sfx.go();
+  phase = "play";
+  $("zones").hidden = false;
+  timeLeft = roundSecs;
+  nextWord();
+  timerId = setInterval(() => {
+    timeLeft--;
+    $("clock").textContent = timeLeft;
+    if (timeLeft <= 10) { $("clock").classList.add("low"); if (timeLeft > 0) sfx.tick(); }
+    if (timeLeft <= 0) endRound();
+  }, 1000);
+}
+
+function nextWord() {
+  if (!deck.length) deck = buildDeck();
+  current = deck.pop();
+  used[catKey].add(current);
+  const safe = current.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  showCenter(`<p id="word">${safe}</p>`);
+}
+
+function answer(ok) {
+  if (phase !== "play" || lock) return;
+  lock = true;
+  log.push({ word: current, ok });
+  ok ? sfx.yes() : sfx.no();
+  const st = $("stage");
+  st.classList.add(ok ? "flash-yes" : "flash-no");
+  $("verdict").textContent = ok ? "Correct!" : "Pass";
+  $("verdict").hidden = false;
+  $("center").style.visibility = "hidden";
+  $("hudScore").textContent = log.filter(l => l.ok).length + " ✓";
+  setTimeout(() => {
+    st.classList.remove("flash-yes", "flash-no");
+    $("verdict").hidden = true;
+    $("center").style.visibility = "";
+    if (phase === "play") nextWord();
+    lock = false;
+  }, 650);
+}
+
+function endRound() {
+  if (phase === "results") return;
+  const wasPlaying = phase === "play";
+  phase = "results";
+  clearInterval(timerId);
+  if (wasPlaying) sfx.end();
+  try { document.fullscreenElement && document.exitFullscreen(); } catch (e) {}
+  const got = log.filter(l => l.ok).length;
+  $("resCat").textContent = DECKS[catKey].name + " · " + roundSecs + " sec";
+  $("resNum").textContent = got;
+  $("resOf").textContent = log.length ? `correct out of ${log.length}` : "No cards played";
+  $("resList").innerHTML = "";
+  for (const l of log) {
+    const li = document.createElement("li");
+    li.className = l.ok ? "yes" : "pass";
+    li.innerHTML = `<span></span><em>${l.ok ? "Got it" : "Passed"}</em>`;
+    li.querySelector("span").textContent = l.word;
+    $("resList").appendChild(li);
+  }
+  $("play").hidden = true; $("results").hidden = false;
+  scrollTo(0, 0);
+}
+
+/* ---------- Tilt (works where the browser grants motion; taps always work) ---------- */
+let motionOn = false, armed = true, sensorSeen = false, flipTilt = false;
+function tiltStatus(msg, cls = "") {
+  $("tiltStatus").textContent = msg;
+  $("tiltStatus").className = "tilt-status " + cls;
+}
+function onMotion(e) {
+  const g = e.accelerationIncludingGravity;
+  if (!g || g.z == null) return;
+  if (!sensorSeen) {
+    sensorSeen = true;
+    $("tiltBtn").setAttribute("aria-pressed", "true");
+    $("tiltBtn").textContent = "Tilt on";
+    tiltStatus("Tilt is working. On your forehead, tilt down for correct and up to pass. If it's backwards, tap “Swap up / down”.", "ok");
+  }
+  if (phase !== "play") return;
+  // z ≈ 0 while the screen faces your friends. Face down → negative, face up → positive.
+  const z = flipTilt ? -g.z : g.z;
+  if (Math.abs(z) < 4) { armed = true; return; }
+  if (!armed) return;
+  if (z < -7) { armed = false; answer(true); }
+  else if (z > 7) { armed = false; answer(false); }
+}
+function sensorCheck() {
+  setTimeout(() => {
+    if (!sensorSeen) tiltStatus(
+      location.protocol !== "https:"
+        ? "No motion data. Phones only allow tilt on an https:// link. Tapping still works."
+        : "No motion data from this browser. If you're viewing this inside Claude, open the standalone link in Safari or Chrome instead. Tapping still works.",
+      "bad");
+  }, 1500);
+}
+function enableMotion() {
+  if (motionOn) return;
+  motionOn = true;
+  try {
+    if (typeof DeviceMotionEvent !== "undefined" && typeof DeviceMotionEvent.requestPermission === "function") {
+      // iPhone: must be asked inside a tap
+      DeviceMotionEvent.requestPermission().then(s => {
+        if (s === "granted") { addEventListener("devicemotion", onMotion); sensorCheck(); }
+        else { motionOn = false; tiltStatus("Motion access was denied. Close and reopen the page in Safari to be asked again. Tapping still works.", "bad"); }
+      }).catch(() => { motionOn = false; tiltStatus("This page isn't allowed to ask for motion access. Open the standalone link in Safari. Tapping still works.", "bad"); });
+    } else {
+      addEventListener("devicemotion", onMotion);
+      sensorCheck();
+    }
+  } catch (e) {}
+}
+
+/* ---------- Wiring ---------- */
+$("tiltBtn").onclick = enableMotion;
+$("flipBtn").onclick = () => {
+  flipTilt = !flipTilt;
+  $("flipBtn").setAttribute("aria-pressed", flipTilt);
+};
+$("startBtn").onclick = startRound;
+$("againBtn").onclick = startRound;
+$("menuBtn").onclick = () => { $("results").hidden = true; $("setup").hidden = false; renderSetup(); };
+$("yesZone").onclick = () => answer(true);
+$("passZone").onclick = () => answer(false);
+$("quitBtn").onclick = e => { e.stopPropagation(); endRound(); };
+addEventListener("keydown", e => {
+  if (phase !== "play") return;
+  if (e.key === "ArrowRight" || e.key === "ArrowDown") answer(true);
+  if (e.key === "ArrowLeft" || e.key === "ArrowUp") answer(false);
+});
+</script>
+
+</body>
+</html>
